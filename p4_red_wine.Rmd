@@ -1,5 +1,7 @@
 Red Wine Exploration by Nicole Mister
+
 ========================================================
+
 This report explores a dataset containing attributes for 1599 red wines.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
@@ -14,6 +16,8 @@ library(ggplot2)
 library(gridExtra)
 library(GGally)
 library(memisc)
+library(corrplot)
+library(aplpack)
 ```
 
 ```{r echo=FALSE, Load_the_Data}
@@ -22,6 +26,7 @@ rw = read.csv('C:/Users/Mister/Documents/data_analyst/P4/P4/wineQualityReds.csv'
 ```
 
 # Univariate Plots Section
+
 ```{r echo=FALSE, Univariate_Plots}
 str(rw)
 summary(rw)
@@ -30,93 +35,167 @@ summary(rw)
 The dataset consists of 12 variables, with 1599 observations.
 
 ```{r echo=FALSE}
-ggplot(aes(x = quality), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = 1)
+hgraph = function(variable, binwidth = 1) {
+  return(ggplot(aes_string(x = variable), data = rw) + 
+           geom_histogram(binwidth = binwidth, fill='red4', color='black'))}
+
+hgraph('quality')
 ```
 
-Wine quality is measured in integers with 0 being the worst and 10 being the best.  All wines in this group fall between 3 and 8. Quality more or less seems to follow a normal distribution with most wines rating between 5 and 7.  I wonder if I can find a relation between one or more variables and wine quality. I'm going to divide the wine into categories: bad, average and good.
+Wine quality is measured in integers with 0 being the worst and 10 being the best.  All wines in this group fall between 3 and 8. Quality more or less seems to follow a normal distribution with most wines rating between 5 and 7.  I wonder if I can find a relation between one or more variables and wine quality. I'm going to divide the wine into categories: bad, fair and good.
 
 ```{r echo=FALSE}
 rw$category = ifelse(rw$quality <= 4, "bad", ifelse((rw$quality >= 5) & (rw$quality <= 6), "fair", "good"))
 ```
 
-
 ```{r echo=FALSE}
-ggplot(aes(x = fixed.acidity), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = 1)
+hgraph('fixed.acidity', 0.01)
 ```
 
-Fixed acidity for this sample ranges from 4.60 to 15.90 with most of the wines falling between 6 and 12.  The histogram is slightly skewed to the right with a few outliers with fixed acidities higher than 12.
+Fixed acidity for this sample ranges from 4.60 to 15.90 with most of the wines falling between 6 and 12.  The histogram is slightly skewed to the right with a few outliers with fixed acidities higher than 12.  
 
 ```{r echo=FALSE}
-ggplot(aes(x = volatile.acidity), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = .01)
+hgraph10 = function(variable, binwidth = 1) {
+  return(hgraph(variable, binwidth) + scale_x_log10())}
+
+hgraph10('fixed.acidity',0.01)
 ```
 
-Volatile acidity for this sample ranges from 0.12 to 1.58 with most wines falling between 0.3 and 0.8.  The data is slightly skewed to the right.
+Since fixed acidity does not follow a normal distribution, I graphed the log 10 of it which is closer to a normal distribution.
 
 ```{r echo=FALSE}
-ggplot(aes(x = citric.acid), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = .01)
+hgraph('volatile.acidity',.01)
+```
+
+Volatile acidity for this sample ranges from 0.12 to 1.58 with most wines falling between 0.3 and 0.8.  The data is slightly skewed to the right.  
+
+```{r echo=FALSE}
+hgraph10('volatile.acidity',.01)
+```
+
+The log 10 graph of volatile acidity is closer to a normal distrbution.
+
+```{r echo=FALSE}
+hgraph('citric.acid',0.01)
 ```
 
 Citric acid ranges from 0 to 1 with most data falling between 0 to 0.6.  The data is spread and slightly skewed to the right.  There is a large count of wines that have a citric acid level of 0 or 0.5.
 
 ```{r echo=FALSE}
-ggplot(aes(x = residual.sugar), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = .1)
+hgraph10('citric.acid',0.01)
 ```
 
-Residual sugar ranges from 0.9 to 15.5 with most wines falling between 1.6 and 5.1.  The data is skewed to the right ass a result of a few outliers.
+The log10 histogram of citric acid is not normally distributed.
 
 ```{r echo=FALSE}
-ggplot(aes(x = chlorides), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = .01)
+hgraph_sqrt = function(variable, binwidth = 1) {
+  return(hgraph(variable, binwidth) + scale_x_sqrt())}
+hgraph_sqrt('citric.acid',0.01)
+```
+
+The square root of citric  acid is not normally distributed either.  There are too many zero values.
+
+```{r echo=FALSE}
+hgraph('residual.sugar',0.1)
+```
+
+Residual sugar ranges from 0.9 to 15.5 with most wines falling between 1.6 and 5.1.  The data is skewed to the right as a result of a few outliers.
+
+```{r echo=FALSE}
+hgraph10('residual.sugar',0.1)
+```
+
+The log 10 of residual sugar is not normally distributed.
+
+```{r echo=FALSE}
+hgraph_sqrt('residual.sugar',0.1)
+```
+
+The square root of residual sugar is also not normally distributed.
+
+```{r echo=FALSE}
+hgraph('chlorides',0.1)
 ```
 
 Chlorides from the samples range from 0.01 to 0.61 with most wine falling between 0.05 and 0.13.  The data is skewed to the right due to a few outliers.
 
+```{r}
+hgraph10('chlorides',0.1)
+```
+
+The log 10 of chlorides is closer to a normal distribution.
+
 ```{r echo=FALSE}
-ggplot(aes(x = free.sulfur.dioxide), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = 1)
+hgraph('free.sulfur.dioxide',)
 ```
 
 Free sulfur dioxide has a wide range of 1 to 72 with most wines falling between 4 and 35.  The data is skewed to the right.
 
 ```{r echo=FALSE}
-ggplot(aes(x = total.sulfur.dioxide), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = 10)
+hgraph10('free.sulfur.dioxide',.1)
+```
+
+The log 10 of free sulfur dioxide is not normally distributed.
+
+```{r echo=FALSE}
+hgraph_sqrt('free.sulfur.dioxide',.1)
+```
+
+The square root of free sulfur dioxide is not normally distributed either.
+
+```{r echo=FALSE}
+hgraph('total.sulfur.dioxide',10)
 ```
 
 Total sulfur dioxide has an even wider range from 6 to 289 with most wine falling between 11 and 112.  The data is skewed to the right.
 
 ```{r echo=FALSE}
-ggplot(aes(x = density), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = .001)
+hgraph10('total.sulfur.dioxide',.1)
+```
+
+The log 10 of total sulfur dioxide is closer to a normal distribution.
+
+```{r echo=FALSE}
+hgraph('density',0.001)
 ```
 
 The data for density appears to follow a normal distribution with most wines falling between 0.994 and 1.
 
 ```{r echo=FALSE}
-ggplot(aes(x = pH), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = .1)
+hgraph('pH',.1)
 ```
 
 The pH data appears to follow a normal distribution with most wines falling between 3.0 and 3.6. 
 
 ```{r echo=FALSE}
-ggplot(aes(x = sulphates), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = .01)
+hgraph('sulphates',0.01)
 ```
 
 The sulphates data is skewed to the right, ranges from 0.33 to 2.00 with most wines falling between 0.47 and 0.93.
 
 ```{r echo=FALSE}
-ggplot(aes(x = alcohol), data = rw) +
-  geom_histogram(fill = "red4", color='black', binwidth = .1)
+hgraph10('sulphates',0.01)
+```
+
+The log 10 of sulphates is closer to normally distributed.
+
+```{r echo=FALSE}
+hgraph('alcohol',0.1)
 ```
 
 The alcohol data is skewed to the right and ranges from 8.4 to 14.9 with most data falling between 9.2 and 12.5.
+
+```{r echo=FALSE}
+hgraph10('alcohol',0.01)
+```
+
+The log 10 of alcohol is skewed to the right.
+
+```{r echo=FALSE}
+hgraph_sqrt('alcohol',0.1)
+```
+
+The square root of alcohol is also skewed to the right.
 
 # Univariate Analysis
 
@@ -134,18 +213,20 @@ Other observations:
 The main feature of interest in the data set is quality.  I'd like to determine which characteristics are best for predicting the quality of a wine.
 
 ### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+
 I suspect that good wines will not be highly acidic or sulfuric since many people find extremes of these tastes to be unpleasant. 
 
-
 ### Did you create any new variables from existing variables in the dataset?
+
 I created a category variable which groups wines with the quality rating of 8 and greater as "good", 6 and 7 as 'fair' and 4 and less as "bad".
 
-
 ### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+
 I did not see any reason to adjust the data.  The data is already tidy.
 
 
 # Bivariate Plots Section
+
 I created boxplots of category and all variables to see if there is any difference between the categories.
 
 ```{r echo=FALSE, Bivariate_Plots}
@@ -162,83 +243,77 @@ box10 = qplot(x = category, y = alcohol, data = rw, geom = 'boxplot')
 grid.arrange(box1,box2,box3,box4,box5,box6,box7,box8,box9,box10, ncol=5)
 ```
 
-I created a scatterplot matrix to quickly review relationships among all the variables (and commented the code to prevent rerunning since it is time consuming).
+I created a corrplot matrix to quickly review relationships among all the variables.
+
 ```{r echo=FALSE}
 rw.subset = rw[, c(2:12)]
-ggpairs(rw.subset)
+M = cor(rw.subset)
+corrplot(M, method = 'number')
 ```
 
-I recreated the graphs with correlations of greater than 0.5 or less than -0.5 for better viewing.
+I recreated the graphs with correlation coefficients of greater than 0.5 or less than -0.5 for better viewing.
 
 ```{r echo=FALSE, Scatterplot_1} 
-ggplot(data=rw,aes(x=fixed.acidity,y=citric.acid))+   
-  geom_point(color='red4',alpha=1/4)+
-  stat_smooth(method='lm')
-
+cgraph = function(xv, yv) {
+  return(ggplot(data=rw,aes(xv, yv))+
+           geom_point(color='red4',alpha=1/4)+
+           stat_smooth(method='lm'))}
+cgraph(rw$fixed.acidity, rw$citric.acid)
 cor.test(rw$citric.acid, rw$fixed.acidity, method='pearson')
 ```
-Citric acid is positively correlated with fixed acidity.
+
+Citric acid is positively correlated with fixed acidity with a correlation coefficient of 0.672.  Fixed acidity increases as citric acid increases.
 
 ```{r echo=FALSE, Scatterplot_2} 
-ggplot(data=rw,aes(x=volatile.acidity,y=citric.acid))+   
-  geom_point(color='red4',alpha=1/4)+
-  stat_smooth(method='lm')
-
+cgraph(rw$volatile.acidity,rw$citric.acid)
 cor.test(rw$citric.acid, rw$volatile.acidity, method='pearson')
 ```
-Citric acid is negatively correlated with volatile acidity.
+
+Citric acid is negatively correlated with volatile acidity with a correlation coefficient of -0.552.  Volatile acidity increases as citric acid decreases.
 
 ```{r echo=FALSE, Scatterplot_3} 
-ggplot(data=rw,aes(x=total.sulfur.dioxide,y=free.sulfur.dioxide))+   
-  geom_point(color='red4',alpha=1/4)+
-  stat_smooth(method='lm')
-
+cgraph(rw$free.sulfur.dioxide,rw$total.sulfur.dioxide)
 cor.test(rw$free.sulfur.dioxide, rw$total.sulfur.dioxide, method='pearson')
 ```
-Total sulfur dioxiode is positively correlated with free sulfur dioxide.
+
+Total sulfur dioxiode is positively correlated with free sulfur dioxide with a correlation coefficient of 0.668.  As free sulfur dioxide increases, total sulfur dioxide increases.
 
 ```{r echo=FALSE, Scatterplot_4} 
-ggplot(data=rw,aes(x=density,y=fixed.acidity))+   
-  geom_point(color='red4',alpha=1/4)+
-  stat_smooth(method='lm')
-
+cgraph(rw$density, rw$fixed.acidity)
 cor.test(rw$fixed.acidity, rw$density, method='pearson')
 ```
-Density is positively correlated with fixed acidity.
+
+Density is positively correlated with fixed acidity with a correlation coefficient of 0.668.  As fixed acidity increases, density increases.
 
 ```{r echo=FALSE, Scatterplot_5} 
-ggplot(data=rw,aes(x=pH,y=fixed.acidity))+   
-  geom_point(color='red4',alpha=1/4)+
-  stat_smooth(method='lm')
-
+cgraph(rw$fixed.acidity,rw$pH)
 cor.test(rw$fixed.acidity, rw$pH, method='pearson')
 ```
-pH is negatively correlated with fixed acidity.
+
+pH is negatively correlated with fixed acidity with a correlation coefficient of -0.683.  As fixed acidity increases, pH decreases.  
 
 ```{r echo=FALSE, Scatterplot_6} 
-ggplot(data=rw,aes(x=pH,y=citric.acid))+   
-  geom_point(color='red4',alpha=1/4)+
-  stat_smooth(method='lm')
-
+cgraph(rw$citric.acid,rw$pH)
 cor.test(rw$citric.acid, rw$pH, method='pearson')
 ```
-pH is negatively correlated with citric acid.
+
+pH is negatively correlated with citric acid with aa correlation coefficient of -0.542.  As citric acid increases, pH descreases.
 
 ```{r echo=FALSE, Scatterplot_7} 
-ggplot(data=rw,aes(x=density,y=alcohol))+   
-  geom_point(color='red4',alpha=1/4)+
-  stat_smooth(method='lm')
-
+cgraph(rw$alcohol,rw$density)
 cor.test(rw$alcohol, rw$density, method='pearson')
 ```
-Density is negatively correlated with alcohol.
+
+Density is negatively correlated with alcohol with a correlation coefficient of -0.496.  As alcohol increases, density decreases.
 
 # Bivariate Analysis
 
 ### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
 I observed a potential relationship between a few of the variables and wine category.  Good wines seem to have a higher fixed acidity and citric acidity while bad wines seem to have a higher volatile acidity.  Bad wines seem to have a higher pH in general.  Good wines had more alcohol.  Good wines are slightly less dense and have slightly more sulphates.  There did not seem to be any difference in residual sugars.  Total and free sulfur dioxide seemed to be lower in both bad and good wines than in fair wines.
 
 ### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+
 Most of the correlations observed were as expected.  Citric acid is related to fixed acidity, volatile acidity, and pH.  Free sulfur dioxide and total sulfur dioxide were positively correlated.  Fixed acidity and pH were correlated as expected, but surprisingly not volatile acidity and pH.  Density was positively correlated with fixed acidity and negatively correlated with alcohol.
 
 ### What was the strongest relationship you found?
@@ -248,25 +323,74 @@ The strongest relationship was between fixed acidity and pH at -0.683.
 
 ```{r echo=FALSE, Multivariate_Plots}
 
-ggplot(data = rw,aes(x = fixed.acidity, y = citric.acid, color=category)) +
-  geom_point() 
+ggraph = function(xv, yv){
+  ggplot(data = rw,aes(x = xv, y = yv, color=category)) +
+    geom_point() +
+    stat_smooth(method='lm')
+}
 
-ggplot(data = rw,aes(x = volatile.acidity, y = citric.acid, color=category)) +
-  geom_point() 
+ggraph(rw$fixed.acidity,rw$citric.acid)
 
-ggplot(data = rw,aes(x = alcohol, y = density, color=category)) +
-  geom_point() 
+rwgood = subset(rw, category == 'good')
+rwfair = subset(rw, category == 'fair')
+rwbad = subset(rw, category == 'bad')
 
-ggplot(data = rw,aes(x = density, y = fixed.acidity, color=category)) +
-  geom_point() 
-
-ggplot(data = rw,aes(x = pH, y = fixed.acidity, color=category)) +
-  geom_point() 
-
-ggplot(data = rw,aes(x = pH, y = citric.acid, color=category)) +
-  geom_point() 
+cor.test(rwgood$fixed.acidity,rwgood$citric.acid)
+cor.test(rwfair$fixed.acidity,rwfair$citric.acid)
+cor.test(rwbad$fixed.acidity,rwbad$citric.acid)
 ```
 
+In good wines, there is a strong correlation between fixed.acidity and citric.acid (r = 0.745).  This correlation is also found in fair and bad wines, but with a smaller correlation coefficient (fair r = 0.693, bad r = 0.618).
+
+```{r echo=FALSE}
+ggraph(rw$volatile.acidity,rw$citric.acid)
+
+cor.test(rwgood$volatile.acidity,rwgood$citric.acid)
+cor.test(rwfair$volatile.acidity,rwfair$citric.acid)
+cor.test(rwbad$volatile.acidity,rwbad$citric.acid)
+```
+
+This graph shows that as citric acid increases, volatile acidity decreases.  The correlation is about as strong in the three categories of wine (good r = -0.495, fair r = -0.529, bad r = -0.512).
+
+```{r echo=FALSE}
+ggraph(rw$alcohol,rw$density)
+
+cor.test(rwgood$alcohol,rwgood$density)
+cor.test(rwfair$alcohol,rwfair$density)
+cor.test(rwbad$alcohol,rwbad$density)
+```
+
+The correlation between alcohol and density is a little stronger in good wine (r = -0.584) than in fair (r = -0.464) or bad (r = -0.444).
+
+```{r echo=FALSE}
+ggraph(rw$density,rw$fixed.acidity)
+
+cor.test(rwgood$fixed.acidity,rwgood$density)
+cor.test(rwfair$fixed.acidity,rwfair$density)
+cor.test(rwbad$fixed.acidity,rwbad$density)
+```
+
+The correlation betweem fixed acidity and density again is stronger in good wine (r = 0.782) than fair (r = 0.678) or bad (r = 0.733).
+
+```{r echo=FALSE}
+ggraph(rw$pH,rw$fixed.acidity)
+
+cor.test(rwgood$fixed.acidity,rwgood$pH)
+cor.test(rwfair$fixed.acidity,rwfair$pH)
+cor.test(rwbad$fixed.acidity,rwbad$pH)
+```
+
+Again, a stronger correlation can be found in good wine for fixed acidity and pH (r = -0.771), than can be found in fair (r = -0.668) or bad (r = -0.649).
+
+```{r echo=FALSE}
+ggraph(rw$pH,rw$citric.acid)
+
+cor.test(rwgood$pH,rwgood$citric.acid)
+cor.test(rwfair$pH,rwfair$citric.acid)
+cor.test(rwbad$pH,rwbad$citric.acid)
+```
+
+A stronger correlation is found between pH and citric acid for good wine (r = -0.721), than fair (r = -0.503) or bad (r = -0.636).
 
 # Multivariate Analysis
 
@@ -275,53 +399,80 @@ ggplot(data = rw,aes(x = pH, y = citric.acid, color=category)) +
 The relationships in the multivariate analysis supported the findings in the bivariate analysis.  Good wines had more citric acid and more fixed acidity.  Citric acid is positively correlated with fixed acidity.  Good wines have less volatile acidity and more citric acid.  Volatile acidity is negatively correlated with citric acid.  Good wines had more alcohol and less density.  Alcohol is negatively correlated with density.  Good wines have less density and more fixed acidity.  Fixed acidity is positively correlated with density.  Good wines have a lower pH and higher fixed acidity.  Fixed acidity is negatively correlated with pH.  Good wines have a lower pH and more citric acid.  Citric acid is negatively correlated with pH.
 
 ### Were there any interesting or surprising interactions between features?
+
 Fixed acidity is positively correlated with density, yet good wines tend to be lower in density and higher fixed acidity.  One might think that based on the correlation, good wines would be higher in both.
 
 ### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
 I did not create any multivariate models.
+
 ------
 
 # Final Plots and Summary
 
 ### Plot One
+
 ```{r echo=FALSE, Plot_One}
-ggplot(data = subset(rw, category != 'fair'), 
-       aes(x = sulphates, y = alcohol, color = category)) +
-  geom_point() +
-  ggtitle('Wine Quality') +
-  xlab('Sulphates') +
-  ylab('Alcohol')
+ggplot(aes(x=quality, y=alcohol), data=rw) + 
+  geom_point(alpha=0.5, position = position_jitter(h=0), 
+             color='orange') +
+  geom_line(stat='summary',fun.y=mean)+
+  geom_line(stat='summary',fun.y=quantile, fun.args=list(probs=.1), linetype = 2, color='blue') +
+    geom_line(stat='summary',fun.y=quantile, fun.args=list(probs=.5),color='blue') +
+  geom_line(stat='summary',fun.y=quantile, fun.args=list(probs=.9), linetype = 2, color='blue') +
+  xlab('Quality Rating') +
+  ylab('Alcohol % by Volume') +
+  ggtitle('Alcohol Levels in Different Wine Qualities')
+
+summary(subset(rw,quality == 3)$alcohol)
+summary(subset(rw,quality == 8)$alcohol)
 ```
 
 ### Description One
-I removed fair wines to more clearly demonstrate the qualities of bad versus good wines.  In Plot One, good wines have more alcohol and sulphates than bad wines.
+
+In this graph, we can see the distribution of alcohol content in the different quality wines.  As the quality increases, the mean and quantile lines rise.  Wines of quality 3 range from 8.400 to 11.000 alcohol % by volume with a mean of 9.955.  Wines of quality 8 range from 9.80 to 14.00 alcohol % by volume with a mean of 12.09.  We can also see that there is a heavier concentration of 5 and 6 wines in general.
 
 ### Plot Two
+
 ```{r echo=FALSE, Plot_Two}
-ggplot(data = subset(rw, category != 'fair'), 
-       aes(x = volatile.acidity, y = citric.acid, color = category)) +
-  geom_point() +
-  ggtitle('Wine Quality') +
-  xlab('Volatile Acidity') +
-  ylab('Citric Acid')
+ggplot(subset(rw, category != 'fair'), aes(x = category, y = alcohol)) +
+  geom_boxplot()+
+  xlab('Quality Category')+
+  ylab('Alcohol % by Volume')+
+  ggtitle('Does Alcohol Volume Determine Wine Quality?')
+
+mean(rwgood$alcohol)
+mean(rwbad$alcohol)
 ```
 
 ### Description Two
-Again with the fair wines removed, we can see that good wines tend to have lower volatile acidity and higher citric acid.
+
+The Alcohol by Volume boxplot shows the most separation between bad and good wines when fair wines are removed.  The first quartile of the good wine (11.32 alcohol % by volume) almost starts higher than the third quartile of the bad wines (12.88 alcohol % by volume).  The alcohol % by volume mean of good wines is higher (11.518) than the mean of bad wines (10.216).
 
 ### Plot Three
+
 ```{r echo=FALSE, Plot_Three}
 ggplot(data = subset(rw, category != 'fair'), 
-       aes(x = fixed.acidity, y = density, color = category)) +
+       aes(x = volatile.acidity, y = citric.acid, color = category)) +
   geom_point() +
-  ggtitle('Wine Quality') +
-  xlab('Fixed Acidity') +
-  ylab('Density')
+  ggtitle('Is Wine Quality Determined by Volatile Acidity and Citric Acid?') +
+  xlab('Volatile Acidity g/dm^3') +
+  ylab('Citric Acid g/dm^3')
+
+mean(rwgood$citric.acid)
+mean(rwgood$volatile.acidity)
+mean(rwbad$citric.acid)
+mean(rwbad$volatile.acidity)
 ```
 
 ### Description Three
-Finally, good wines have more fixed acidity and less density.
+
+Again, I removed fair wines to more clearly demonstrate the qualities of bad versus good wines.  In this plot, we can see that good wines tend to have lower volatile acidity (0.406 g/dm^3) and higher citric acid (0.376 g/dm^3) than bad wines(0.724 g/dm^3 and 0.174 g/dm^3 respectively).
+
 ------
 
 # Reflection
-Through this data analysis, I explored what characteristics made a wine a higher quality.  Good wines in this data set tended to have higher fixed acidity, citric acid, alcohol and sulphates and lower volatile acidity, pH amd density.  Because the data was tidy, creating graphs was a simple process.  I created one additional variable for simpler visualization and generalization.  Statistical analysis would help determine if the relationships between wine quality and characteristics is statisically significant.
+
+Deciding what graphs were the most telling was difficult.  Doing the initial exploration of the characteristicts was time consuming but using a function speeded up the process a bit.  Drawing conclusions from the data was difficult since most of the charcteristics of wine do not appear to be correlated to wine quality.  However, I believe that dividing the wines into good and bad wines made the differing characteristics more apparent.  
+
+I think the findings are interesting enough to warrant an experiment with wines measuring for and controlling these characteristics in a doubleblind taste test.  Data analysis might also explore characteristics of wines of different regions and include more wines of differing qualities.
